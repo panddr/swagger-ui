@@ -1,0 +1,76 @@
+// @mixin font-face($font-family, $file-path, $font-weight, $font-style) {
+//   @font-face {
+//     font-family: $font-family;
+//     src: url("#{$file-path}.woff") format("woff");
+//     font-weight: $font-weight;
+//     font-style: $font-style;
+//   }
+// }
+
+// @include font-face(Lars-Mono, "/Lars-Mono", 300, normal);
+
+$grid: 20px;
+$color-grey: #888;
+
+.citadel-menu {
+	display: flex;
+	align-items: center;
+
+	background: #000;
+	font-family: Lars-Mono, Open Sans, sans-serif;
+
+	> .citadel-logo {
+		border-right: 1px solid $color-grey;
+		width: 60px;
+		padding: $grid/4*3;
+
+		> img {
+			display: block;
+			width: 100%;
+		}
+	}
+
+	> .citadel-menu-item {
+		color: white;
+		text-decoration: none;
+		text-transform: uppercase;
+		letter-spacing: 1.4px;
+		font-size: .7rem;
+		font-weight: 300;
+		border-right: 1px solid $color-grey;
+		padding: 22px;
+		height: 100%;
+	}
+}
+
+hgroup.main a {
+    display: none !important;
+}
+
+table.parameters > tbody > tr {
+    border-bottom: 1px solid #eee;
+}
+table.parameters .parameters-col_description p:first-child {
+    margin-top: 0;
+}
+
+.swagger-ui .response-col_description__inner div.markdown,
+.swagger-ui .response-col_description__inner div.renderedMarkdown {
+    background: none;
+}
+.swagger-ui .response-col_description__inner div.markdown p,
+.swagger-ui .response-col_description__inner div.renderedMarkdown p {
+    font-style: normal;
+    font-weight: normal;
+    font-family: Open Sans,sans-serif;
+    color: #3b4151;
+    font-size: 14px;
+}
+
+.swagger-ui .info code {
+    color: inherit;
+    font-weight: inherit;
+}
+.swagger-ui .info {
+    margin-top: 25px;
+}
