@@ -1,0 +1,97 @@
+openapi: 3.0.0
+info:
+  title: CITADEL Faucet
+  version: v1
+  description: '
+
+
+    CITADEL Faucet API is used to register accounts on BitShares blockchain.
+
+
+    ##### POST requests
+
+
+    Note, that all POST requests MUST contain a request body of type
+
+    "application/json", containing single JSON object with all the
+
+    request parameters as keys / values.
+
+
+    ##### SDKs and code samples
+
+
+    - python: [citadel/rpcs/btsfaucet](https://github.com/jhtitor/citadel/blob/master/rpcs/btsfaucet.py)
+
+    - javascript: [bitshares-ui/faucetFetch](https://github.com/bitshares/bitshares-ui/blob/22caabfbaeacd09e818ec513cd459b742dbe5dc3/app/actions/WalletActions.js#L109)
+
+
+    '
+paths:
+  /api/v1/accounts:
+    post:
+      tags: [faucet]
+      operationId: register_account
+      description: 'Register a new account on BitShares network.
+
+
+        You are supposed to provide your own Public Keys along with desired account
+        name.
+
+
+        Note, that Private Keys MUST NEVER be transmitted over network.'
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/FaucetResponse'}
+          description: Information about registered account.
+        500:
+          content:
+            application/json:
+              example:
+                error: {code: 500, message: '{ "register": [ "Error message", 500
+                    ] }'}
+              schema: {$ref: '#/components/schemas/FaucetError'}
+          description: '{ "register": [ "Error message", 500 ] }'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                account:
+                  $ref: '#/components/schemas/Account'
+                  description: ''
+servers:
+- {url: 'https://citadel.li/faucet'}
+- {url: 'http://citadel2miawoaqw.onion/faucet'}
+tags:
+- {description: '', name: faucet}
+components:
+  schemas:
+    Account:
+      properties:
+        active_key: {description: Active Public Key, type: string}
+        memo_key: {description: Memo Public Key, type: string}
+        name: {description: Account Name, type: string}
+        owner_key: {description: Owner Public Key, type: string}
+        refcode: {type: string}
+        referrer: {type: string}
+      type: object
+    FaucetError:
+      properties:
+        register:
+          items:
+            anyOf:
+            - {description: error message., type: string}
+            - {description: error code., type: number}
+          type: array
+      type: object
+    FaucetResponse:
+      properties:
+        account: {$ref: '#/components/schemas/Account'}
+      type: object
+
