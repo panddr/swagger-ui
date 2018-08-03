@@ -1,0 +1,608 @@
+openapi: 3.0.0
+info:
+  title: CITADEL Gateway
+  version: 2.1.1
+  description: "\n\nCITADEL Gateway API is used to transfer Coins across blockchains.\n\
+    \nThis API is both a subset and a superset of BlockTrades API v2.0 --\nif a method\
+    \ exists, it should be fully compatible. At the same time,\nwe have extended some\
+    \ methods with new parameters and have added some\nnew functionality. Differences\
+    \ from BlockTrades API will be marked as such.\n\n##### Address and Memo\n\nSome\
+    \ blockchains (like Bitcoin or Monero) are capable of generating\nnew wallet address\
+    \ for each new payment. We call this feature\n`supportsInputToUniqueAddress`.\n\
+    \nOn other blockchains (like Bitshares), the account name is a constant,\nso an\
+    \ additional memo message (or some equivalent, like Payment ID) is\nrequired to\
+    \ identify the transaction. We call this method\n`supportsInputToSharedAddressWithMemo`.\n\
+    \nTherefore, you will see that most address parameters come in pairs:\n`inputAddress`\
+    \ and `inputMemo`, `ouputAddress` and `outputMemo`;\n`refundAddress` and `refundMemo`,\
+    \ etc. The memo part is only needed\nfor \"shared_address_with_memo\" situations,\
+    \ and can be left empty\notherwise.\n\n##### POST requests\n\nNote, that all POST\
+    \ requests MUST contain a request body of type\n\"application/json\", containing\
+    \ single JSON object with all the\nrequest parameters as keys / values.\n\n#####\
+    \ Recipes\n\n<div>\n<details>\n<summary>Simple usage:</summary>\n\n1. Get a list\
+    \ of all coins and all wallets with `/coins` and `/wallets`.\n2. Get a list of\
+    \ trading pairs with `/trading-pairs`.\n3. Setup new bridge with `/simple-trade/initiate-trade`.<br/>\n\
+    \   Select input and output coin types, provide an output address.\n4. You will\
+    \ receive input address.\n5. Send some coins to input address -><br/>\n   Receive\
+    \ some coins on output address you specified in step 3.\n6. Monitor transaction\
+    \ state with `/simple-trade/transactions`.\n</details>\n</div>\n\n##### SDKs and\
+    \ code samples\n\n- python: [citadel/rpcs/blocktradesus](https://github.com/jhtitor/citadel/blob/master/rpcs/blocktradesus.py)\n\
+    - javascript: [bitshares-ui/gatewayMethods](https://github.com/bitshares/bitshares-ui/blob/master/app/lib/common/gatewayMethods.js)\n\
+    \n"
+paths:
+  /trading-pairs:
+    get:
+      tags: [gateway]
+      operationId: list_trading_pairs
+      description: Get a list of all coin pairs traded on Citadel.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              example:
+              - {inputCoinType: xmr, outputCoinType: citadel.monero, rateFee: '0.'}
+              schema:
+                items: {$ref: '#/components/schemas/TradingPair'}
+                type: array
+          description: Array of trading pair definitions.
+  /coins:
+    get:
+      tags: [gateway]
+      operationId: list_coins
+      description: Get a list of all coins supported by the Citadel.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items: {$ref: '#/components/schemas/Coin'}
+                type: array
+          description: Array of coin definitions.
+  /coins/{name}:
+    get:
+      tags: [gateway]
+      operationId: get_coins
+      description: Get information about coin identified by {name}.
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: CoinType
+        schema:
+          type: string
+        example: citadel.monero
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Coin'}
+          description: Coin definition.
+  /active-wallets:
+    get:
+      tags: [gateway]
+      operationId: active_wallets
+      description: Get a list of all currently active wallets.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items: {type: string}
+                type: array
+          description: List of wallet names.
+  /wallets:
+    get:
+      tags: [gateway]
+      operationId: list_wallets
+      description: Get a list of all wallets supported by the Citadel.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items: {$ref: '#/components/schemas/Wallet'}
+                type: array
+          description: Array of wallet definitions.
+  /wallets/{name}:
+    get:
+      tags: [gateway]
+      operationId: get_wallet
+      description: Get information about a specific wallet.
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: WalletType
+        schema:
+          type: string
+        example: bitshares2
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Wallet'}
+          description: Wallet definition.
+  /wallets/{name}/address-validator:
+    get:
+      tags: [gateway]
+      operationId: validate_address
+      description: 'Validate an address.
+
+
+        You SHOULD use this for every user-provided wallet address.
+
+
+        NOTE: POST version of this call is deprecated.'
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Wallet type.
+        schema:
+          type: string
+      - required: true
+        name: address
+        in: query
+        description: Address to validate.
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AddressValidation'}
+          description: Address validation result.
+    post:
+      tags: [gateway]
+      operationId: validate_address
+      description: 'Validate an address.
+
+
+        You SHOULD use this for every user-provided wallet address.
+
+
+        NOTE: POST version of this call is deprecated.'
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Wallet type.
+        schema:
+          type: string
+      - required: true
+        name: address
+        in: form
+        description: Address to validate.
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/AddressValidation'}
+          description: Address validation result.
+  /deposit-limits:
+    get:
+      tags: [gateway]
+      operationId: deposit_limits
+      description: 'Get deposit limit for a trading pair.
+
+
+        You SHOULD display this information to the end-user.'
+      parameters:
+      - required: true
+        name: inputCoinType
+        in: query
+        description: WalletType
+        schema:
+          type: string
+        example: xmr
+      - required: true
+        name: outputCoinType
+        in: query
+        description: CoinType
+        schema:
+          type: string
+        example: citadel.monero
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DepositLimit'}
+          description: Deposit limit.
+  /estimate-output-amount:
+    get:
+      tags: [gateway]
+      operationId: estimate_output_amount
+      description: 'Get an output estimate in outputCoinType, given inputCoinType,
+        outputCoinType
+
+
+        and inputAmount.'
+      parameters:
+      - required: true
+        name: inputCoinType
+        in: query
+        description: CoinType
+        schema:
+          type: string
+      - required: true
+        name: outputCoinType
+        in: query
+        description: CoinType
+        schema:
+          type: string
+      - required: true
+        name: inputAmount
+        in: query
+        description: Amount in inputCoinType coins.
+        schema:
+          type: number
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Estimate'}
+          description: Output estimate.
+  /estimate-input-amount:
+    get:
+      tags: [gateway]
+      operationId: estimate_input_amount
+      description: 'Get an estimate for required input, given inputCoinType, outputCoinType
+
+
+        and desired outputAmount.'
+      parameters:
+      - required: true
+        name: inputCoinType
+        in: query
+        description: CoinType
+        schema:
+          type: string
+      - required: true
+        name: outputCoinType
+        in: query
+        description: CoinType
+        schema:
+          type: string
+      - required: true
+        name: outputAmount
+        in: query
+        description: Amount in outputCoinType coins.
+        schema:
+          type: number
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/Estimate'}
+          description: Input estimate.
+  /simple-api/initiate-trade:
+    post:
+      tags: [gateway]
+      operationId: initiate_trade
+      description: 'Setup a new bridge.
+
+
+        ### Refunds
+
+
+        If there is a problem with a transaction, Citadel MAY send the
+
+
+        funds back (instead of re-scheduling another attempt).
+
+
+        You SHOULD provide a `refundAddress` so that the process could
+
+
+        proceed automatically.
+
+
+        The `refundAddress` MUST be in inputCoin format, e.g. if you are
+
+
+        sending XMR, refundAddress MUST be an XMR wallet.
+
+
+        If inputCoin does not support inputs to unique address, you
+
+
+        MUST also provide `refundMemo`, which will be attached to the refund
+
+
+        transaction, so that the refund could be correctly identified.'
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleBridge'}
+          description: Newly created bridge.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                inputCoinType:
+                  type: string
+                  description: CoinType
+                outputCoinType:
+                  type: string
+                  description: CoinType
+                outputAddress:
+                  type: string
+                  description: Some wallet address
+                outputMemo:
+                  type: string
+                  description: 'Optional memo string for the output transaction (on
+                    blockchains
+
+
+                    that support it). Note: CITADEL-exclusive!'
+                refundAddress:
+                  type: string
+                  description: Wallet address in inputCoin format.
+                refundMemo:
+                  type: string
+                  description: Optional memo string for the refund transaction. See
+                    outputMemo.
+                sessionToken:
+                  type: string
+                  description: CURRENTLY UNSUPPORTED.
+                inputAddressType:
+                  type: string
+                  description: 'Can be ''unique_address'' or ''shared_address_with_memo''
+
+
+                    If not provided, the best default for the input coin will be picked.'
+  /simple-api/transactions:
+    get:
+      tags: [gateway]
+      operationId: list_transactions
+      description: Get a list of transactions matched by inputAddress and inputCoinType.
+      parameters:
+      - required: true
+        name: inputAddress
+        in: query
+        description: ''
+        schema:
+          type: string
+      - required: true
+        name: inputCoinType
+        in: query
+        description: ''
+        schema:
+          type: string
+      - required: false
+        name: inputMemo
+        in: query
+        description: 'MUST be provided if inputWallet does not
+
+
+          supportInputToUniqueAddress'
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/SimpleTransaction'}
+          description: Array of found transactions.
+  /simple-api/get-last-address:
+    post:
+      tags: [gateway]
+      operationId: get_last_address
+      description: 'Find previously created bridge.
+
+
+        This MAY be used instead of/before creating new bridges.
+
+
+        The primary intention here is to reuse deposit addresses on BitShares DEX.
+
+
+        E.g. bitshares user dan has created an xmr -> citadel.monero bridge.
+
+
+        Querying this method with coin=citadel.monero and account=dan should yield
+        the same input xmr address.
+
+
+        CITADEL-exclusive: this method can be used the other way around, simply provide
+        wallet address in `account` param.'
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                example: {address: SOME-INPUT-ADDRESS}
+                type: object
+          description: Last used address.
+        400:
+          content:
+            application/json:
+              example:
+                error: {code: 400, message: No matching address was found.}
+              schema: {$ref: '#/components/schemas/ErrorResponse'}
+          description: No matching address was found.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                coin:
+                  type: string
+                  description: output coin type.
+                account:
+                  type: string
+                  description: output address or account name.
+servers:
+- {url: 'https://citadel.li/trade'}
+- {url: 'http://citadel2miawoaqw.onion/trade'}
+tags:
+- {description: Simple Trade API, name: gateway}
+components:
+  schemas:
+    AddressValidation:
+      properties:
+        accountNumber: {default: null, type: string}
+        avatar: {default: null, type: string}
+        correctAddress: {default: null, type: string}
+        isAccount: {default: null, type: boolean}
+        isBlacklisted: {default: false, type: boolean}
+        isValid: {default: true, type: boolean}
+        memoExpected: {default: false, type: boolean}
+        memoPlaceholderText: {default: null, type: string}
+        name: {default: null, type: string}
+      type: object
+    Coin:
+      properties:
+        authorized: {default: null, description: 'if false, notAuthorizedReasons shall
+            contain the reason.', type: string}
+        backingCoinType: {description: 'name of the backing coin, for 1:1 backed tokens',
+          type: string}
+        coinPriora: {default: 0, type: number}
+        coinType: {description: _primary unique ID_ of this coin within this API.,
+          type: string}
+        gateFee: {default: 0, description: fee taken for passing through Citadel gates.,
+          type: number}
+        intermediateAccount: {example: citadel-wallet, type: string}
+        name: {description: human-friendly name of the coin, type: string}
+        notAuthorizedReasons: {default: null, description: set if `authorized` is
+            false, type: string}
+        precision: {example: 1000000000, format: int64, type: number}
+        restricted: {default: false, type: boolean}
+        supportsOutputMemos: {description: CITADEL-exclusive!, type: boolean}
+        symbol: {description: ticker name of the coin, example: CITADEL.MONERO, type: string}
+        transactionFee: {type: number}
+        walletName: {type: string}
+        walletType: {type: string}
+      type: object
+    DepositLimit:
+      properties:
+        depositLimit: {type: string}
+        inputCoinType: {type: string}
+        outputCoinType: {type: string}
+      type: object
+    ErrorResponse:
+      properties:
+        error:
+          properties:
+            code: {type: integer}
+            message: {type: string}
+          type: object
+      type: object
+    Estimate:
+      properties:
+        inputAmount: {type: number}
+        inputCoinType: {type: string}
+        outputAmount: {type: number}
+        outputCoinType: {type: string}
+      type: object
+    SimpleBridge:
+      properties:
+        flatTransactionFeeInInputCoinType: {description: output transaction fee converted
+            to input coin type., example: 7.0e-05, type: number}
+        inputAddress: {description: the input address where the user should send the
+            funds to convert. The format will vary depending on the input wallet type.,
+          type: string}
+        inputCoinType: {description: the coin type which is sent in to Citadel, type: string}
+        inputMemo: {description: 'on some blockchains like BitShares, the memo or
+            data the user should send along with the transaction. On Bitcoin-style
+            blockchains, there is no memo, the inputAddress is sufficient.', type: string}
+        outputAddress: {description: the output address where Citadel will send the
+            results of this conversion., type: string}
+        outputCoinType: {description: the type of output coin Citadel will generate.,
+          type: string}
+        outputMemo: {type: string}
+        refundAddress: {description: output transaction fee converted to input coin
+            type., type: string}
+        refundMemo: {type: string}
+      type: object
+    SimpleTransaction:
+      properties:
+        inputAddress: {description: input address user had sent the funds to. The
+            format will vary depending on the input wallet type., type: string}
+        inputAmount: {description: amount of input coin type that was sent into Citadel.,
+          format: double, type: number}
+        inputCoinType: {description: the coin type which was sent into Citadel., type: string}
+        inputFirstSeenTime: {default: null, format: date-time, type: string}
+        inputFullyConfirmedTime: {default: null, format: date-time, type: string}
+        inputMemo: {description: 'on some blockchains like BitShares, the memo or
+            data the user should send along with the transaction. On Bitcoin-style
+            blockchains, there is no memo, the inputAddress is sufficient.', type: string}
+        inputNumberOfConfirmations: {format: int32, type: number}
+        inputTransactionHash: {type: string}
+        inputWalletType: {type: string}
+        lastModifiedTime: {format: date-time, type: string}
+        outputAddress: {description: the output address where Citadel will send the
+            results of this conversion., type: string}
+        outputAddressNickname: {default: unnamed3_1, type: string}
+        outputAmount: {description: amount of output coin type this transaction yields.,
+          format: double, type: number}
+        outputCoinType: {description: the type of output coin Citadel will generate.,
+          type: string}
+        outputInitiationTime: {format: date-time, type: string}
+        outputMemo: {type: string}
+        outputTransactionHash: {type: string}
+        outputWalletType: {type: string}
+        primarySourceAddress: {default: null, description: our best guess for refundAddress.,
+          type: string}
+        rateFee: {format: double, type: number}
+        refundAddress: {default: null, description: output transaction fee converted
+            to input coin type., type: string}
+        refundMemo: {type: string}
+        transactionFee: {format: double, type: number}
+        transactionId: {description: unique transaction id., type: string}
+        transactionProcessingState:
+          description: current status of the transaction.
+          enum: [transaction_seen, transaction_fully_confirmed, output_transaction_broadcast,
+            claiming_surety, awaiting_order_fill, output_transaction_initiated, output_transaction_fully_confirmed,
+            orphaned, refund_transaction_scheduled, refund_transaction_initiated,
+            no_refund_address, insufficient_funds_in_hot_wallet_to_send_output, insufficient_liquidity,
+            no_output_mapping, permanent_output_failure_unauthorized_input_currency,
+            permanent_output_failure_unauthorized_output_currency, permanent_output_failure_input_too_small,
+            permanent_output_failure_manually_refunded, permanent_output_failure_invalid_transaction,
+            permanent_output_failure_invalid_address, output_wallet_unreachable, unknown_error_scanning_input,
+            unknown_error_sending_output, unknown_error_computing_output, unknown_error_claiming_surety,
+            output_approved_before_fully_confirmed, output_sent_before_fully_confirmed]
+          type: string
+      type: object
+      xml: {name: SimpleTransaction}
+    TradingPair:
+      example: {feeRate: 0.0, inputCoinType: xmr, outputCoinType: citadel.monero}
+      properties:
+        feeRate: {type: number}
+        inputCoinType: {type: string}
+        outputCoinType: {type: string}
+      type: object
+    Wallet:
+      properties:
+        addresses:
+          properties:
+            classification:
+              enum: [account, address]
+              type: string
+          type: object
+        block_explorer: {type: object}
+        defaultInputAddressType:
+          enum: [unique_address, shared_address_with_memo]
+          type: string
+        default_coin_type: {description: 'for blockchains with multiple tokens, name
+            of core token.', type: string}
+        extraData: {type: object}
+        name: {description: human-readable name, type: string}
+        supportsInputToSharedAddressWithMemo: {type: boolean}
+        supportsInputToUniqueAddress: {type: boolean}
+        walletType: {description: __primary unqiue ID__ of this wallet., type: string}
+      type: object
+

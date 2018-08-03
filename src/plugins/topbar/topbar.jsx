@@ -70,29 +70,58 @@ export default class Topbar extends React.Component {
   }
 
   componentWillMount() {
-    const configs = this.props.getConfigs()
-    const urls = configs.urls || []
+    // const configs = this.props.getConfigs()
+    // const urls = configs.urls || []
 
-    if(urls && urls.length) {
-      let primaryName = configs["urls.primaryName"]
-      if(primaryName)
-      {
-        urls.forEach((spec, i) => {
-          if(spec.name === primaryName)
-            {
-              this.setState({selectedIndex: i})
-            }
-        })
-      }
+    // if(urls && urls.length) {
+    //   let primaryName = configs["urls.primaryName"]
+    //   if(primaryName)
+    //   {
+    //     urls.forEach((spec, i) => {
+    //       if(spec.name === primaryName)
+    //         {
+    //           this.setState({selectedIndex: i})
+    //         }
+    //     })
+    //   }
+    // }
+
+    if (window.location.hash.includes("gateway")) {
+      this.setState({selectedIndex: 2});
+    } else if (window.location.hash.includes("faucet")) {
+      this.setState({selectedIndex: 1});
+    } else {
+      this.setState({selectedIndex: 0});
     }
   }
 
   componentDidMount() {
     const urls = this.props.getConfigs().urls || []
 
+    // console.log(urls, this.state.selectedIndex, window.location.hash.includes("gateway"))
+
+    // if (window.location.hash == "#/gateway") {
+    //   this.loadSpec("gateway.yaml");
+    // }
+
+    // if (window.location.hash == "#/faucet") {
+    //   this.loadSpec("faucet.yaml");
+    // }
+
+    // if (window.location.hash == "#/openapi") {
+    //   this.loadSpec("openapi.yaml");
+    // }
+
     if(urls && urls.length) {
       this.loadSpec(urls[this.state.selectedIndex].url)
     }
+  }
+
+  changeAPI(e, apiName) {
+    e.stopPropagation();
+    e.preventDefault();
+    this.loadSpec(apiName + ".yaml");
+    window.history.replaceState(null, "", "/#/" + apiName);
   }
 
   onFilterChange =(e) => {
@@ -138,11 +167,11 @@ export default class Topbar extends React.Component {
 
     return (
       <div className="citadel-menu">
-        <a className="citadel-logo" href="?urls.primaryName=openapi">
+        <a className="citadel-logo" href="?urls.primaryName=openapi" onClick={ (e) => this.changeAPI(e, "openapi") }>
           <img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0idXRmLTgiPz4NCjwhLS0gR2VuZXJhdG9yOiBBZG9iZSBJbGx1c3RyYXRvciAxOS4wLjAsIFNWRyBFeHBvcnQgUGx1Zy1JbiAuIFNWRyBWZXJzaW9uOiA2LjAwIEJ1aWxkIDApICAtLT4NCjxzdmcgdmVyc2lvbj0iMS4xIiBpZD0iTGF5ZXJfMSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4bWxuczp4bGluaz0iaHR0cDovL3d3dy53My5vcmcvMTk5OS94bGluayIgeD0iMHB4IiB5PSIwcHgiDQoJIHZpZXdCb3g9Ii0yODEgNDA0LjkgMzIgMzIiIHN0eWxlPSJlbmFibGUtYmFja2dyb3VuZDpuZXcgLTI4MSA0MDQuOSAzMiAzMjsiIHhtbDpzcGFjZT0icHJlc2VydmUiPg0KPHN0eWxlIHR5cGU9InRleHQvY3NzIj4NCgkuc3Qwe2ZpbGw6I0ZGRkZGRjt9DQo8L3N0eWxlPg0KPGc+DQoJPGc+DQoJCTxwYXRoIGNsYXNzPSJzdDAiIGQ9Ik0tMjU0LDQzNC40aC0yMi42bDguOS0yNi44aDQuN0wtMjU0LDQzNC40eiBNLTI3NS4yLDQzMy40aDE5LjhsLTguMy0yNC44aC0zLjNMLTI3NS4yLDQzMy40eiIvPg0KCTwvZz4NCjwvZz4NCjwvc3ZnPg0K"/>
         </a>
-        <a href="?urls.primaryName=faucet" className="citadel-menu-item">Faucet</a>
-        <a href="?urls.primaryName=gateway" className="citadel-menu-item">Gateway</a>
+        <a href="?urls.primaryName=faucet" className="citadel-menu-item" onClick={ (e) => this.changeAPI(e, "faucet") }>Faucet</a>
+        <a href="?urls.primaryName=gateway" className="citadel-menu-item" onClick={ (e) => this.changeAPI(e, "gateway") }>Gateway</a>
       </div>
     )
   }

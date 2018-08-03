@@ -42,7 +42,11 @@
       window["SwaggerUIStandalonePreset"] = window["swagger-ui-standalone-preset"]
       // Build a system
       const ui = SwaggerUIBundle({
-        url: "https://petstore.swagger.io/v2/swagger.json",
+        urls: [
+          {url: "openapi.yaml", name: "openapi"},
+          {url: "faucet.yaml", name: "faucet"},
+          {url: "gateway.yaml", name: "gateway"}
+        ],
         dom_id: '#swagger-ui',
         deepLinking: true,
         presets: [
@@ -56,15 +60,6 @@
       })
 
       window.ui = ui
-
-      ui.initOAuth({
-        clientId: "your-client-id",
-        clientSecret: "your-client-secret-if-required",
-        realm: "your-realms",
-        appName: "your-app-name",
-        scopeSeparator: " ",
-        additionalQueryStringParams: {}
-      })
     }
   </script>
 </body>

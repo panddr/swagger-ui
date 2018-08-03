@@ -1,0 +1,10 @@
+openapi: "3.0.0"
+info:
+  title: CITADEL API Explorer
+  version: v0
+  description: ''
+paths:
+  /:
+    get:
+      operationId: root
+      summary: 

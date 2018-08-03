@@ -83,8 +83,10 @@ export const readyToScroll = (isShownKey, ref) => (system) => {
   const scrollToKey = system.layoutSelectors.getScrollToKey()
 
   if(Im.is(scrollToKey, fromJS(isShownKey))) {
-    system.layoutActions.scrollToElement(ref)
-    system.layoutActions.clearScrollTo()
+    if (window.location.hash != "#/gateway" && window.location.hash != "#/faucet" && window.location.hash != "#/openapi" && window.location.hash != "#/default") {
+      system.layoutActions.scrollToElement(ref)
+      system.layoutActions.clearScrollTo()
+    }
   }
 }
 

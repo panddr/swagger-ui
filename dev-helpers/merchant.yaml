@@ -1,0 +1,511 @@
+openapi: 3.0.0
+info:
+  title: CITADEL Merchant
+  version: 0.0.1
+  description: "\n\nCITADEL Merchant API...\n\n##### Address and Memo\n\n##### POST\
+    \ requests\n\n##### Recipes\n\n<div>\n<details>\n<summary>Simple usage:</summary>\n\
+    \n1. Get a list of all coins and all wallets with `/coins` and `/wallets`.\n2.\
+    \ Get a list of trading pairs with `/trading-pairs`.\n3. Setup new bridge with\
+    \ `/simple-trade/initiate-trade`.<br/>\n   Select input and output coin types,\
+    \ provide an output address.\n4. You will receive input address.\n5. Send some\
+    \ coins to input address -><br/>\n   Receive some coins on output address you\
+    \ specified in step 3.\n6. Monitor transaction state with `/simple-trade/transactions`.\n\
+    </details>\n</div>\n\n##### SDKs and code samples\n\n- python: [citadel/rpcs/blocktradesus](https://github.com/jhtitor/citadel/blob/master/rpcs/blocktradesus.py)\n\
+    - javascript: [bitshares-ui/gatewayMethods](https://github.com/bitshares/bitshares-ui/blob/master/app/lib/common/gatewayMethods.js)\n\
+    \n"
+paths:
+  /v1/internal/signup:
+    get:
+      tags: [internal]
+      operationId: merchant_account_signup_info
+      description: Obtain information required to sign up.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                example: {verification_challenge: some_random_id_12345}
+                type: object
+          description: Signup info
+    post:
+      tags: [internal]
+      operationId: merchant_account_create
+      description: Create new CITADEL Merchant account.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MerchantAccountInfo'}
+          description: Information about newly created account.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                username:
+                  type: string
+                  description: Desired username.
+                password:
+                  type: string
+                  description: Desired password.
+                verification_key:
+                  type: string
+                  description: Google reCaptcha response key.
+  /v1/internal/login:
+    post:
+      tags: [internal]
+      operationId: merchant_account_login
+      description: Get a new session token.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/MerchantAccountToken'}
+          description: New session token.
+        403:
+          content:
+            application/json:
+              schema:
+                example:
+                  error: {code: 403, message: Incorrect username/password pair.}
+                type: Unauthorized
+          description: Incorrect username/password pair.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                username:
+                  type: string
+                  description: ''
+                password:
+                  type: string
+                  description: ''
+                verification_key:
+                  type: string
+                  description: ''
+  /v1/internal/services:
+    put:
+      tags: [internal]
+      operationId: create_service
+      description: Create new service.
+      parameters: []
+      responses: {}
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                session_token:
+                  type: string
+                  description: Auth token for current session.
+                name:
+                  type: string
+                  description: Unique name for your service. Free-form.
+                url:
+                  type: string
+                  description: Primary URL for this service.
+    get:
+      tags: [internal]
+      operationId: list_services
+      description: Get a list of all created services.
+      parameters:
+      - required: true
+        name: session_token
+        in: query
+        description: Auth token for current session.
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items: {$ref: '#/components/schemas/MerchantServiceInfo'}
+                type: array
+          description: Array of services that belong to account.
+  /v1/internal/services/{name}/api_secret:
+    post:
+      tags: [internal]
+      operationId: regen_service_apisecret
+      description: 'Generate new API secret for the service {name} and return it.
+
+
+        This will invalidate previously generated API secret(s)!'
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Unique service name.
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              example:
+              - {api_secret: abc-555, name: servicename}
+              schema: {$ref: '#/components/schemas/MerchantServiceNonce'}
+          description: Object with service name and new API secret.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                session_token:
+                  type: string
+                  description: Auth token for current session.
+  /v1/internal/services/{name}/accounts:
+    get:
+      tags: [internal]
+      operationId: merchant_list_accounts
+      description: Get a list of all dummy accounts related to service {name}.
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Unique service name.
+        schema:
+          type: string
+      - required: true
+        name: session_token
+        in: query
+        description: Auth token for current session.
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              example:
+              - {username: user52}
+              schema:
+                items: {$ref: '#/components/schemas/DummyAccountInfo'}
+                type: array
+          description: Array of dummy accounts that belong to the service.
+  /v1/accounts:
+    put:
+      tags: [merchant]
+      operationId: create_account
+      description: Create new dummy account.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DummyAccountInfo'}
+          description: New dummy account
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                username:
+                  type: string
+                  description: ''
+    get:
+      tags: [merchant]
+      operationId: list_accounts
+      description: Get a list of all your dummy accounts.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items: {$ref: '#/components/schemas/DummyAccountInfo'}
+                type: array
+          description: Array of dummy accounts.
+  /v1/accounts/{name}:
+    get:
+      tags: [merchant]
+      operationId: get_account
+      description: Get information about dummy account identified by {name}.
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Dummy account username.
+        schema:
+          type: string
+        example: user52
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {$ref: '#/components/schemas/DummyAccountInfo'}
+          description: Information about dummy account.
+  /v1/accounts/{name}/balances:
+    get:
+      tags: [merchant]
+      operationId: get_account_balances
+      description: List balances for dummy account identified by {name}.
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Dummy account username.
+        schema:
+          type: string
+        example: user52
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                example: {BTS: '0.02500', OPEN.BTC: '0.0100000'}
+                type: dict
+          description: A dictionary containing assets symbols as keys and balances
+            as values.
+  /v1/internal/services/{name}/accounts/{username}:
+    get:
+      tags: [internal]
+      operationId: merchant_get_account
+      description: Get information about a dummy account {username}, from service
+        {name}.
+      parameters:
+      - required: true
+        name: session_token
+        in: query
+        description: Auth token for current session.
+        schema:
+          type: string
+      - required: true
+        name: name
+        in: path
+        description: Unique service name.
+        schema:
+          type: string
+      - required: true
+        name: username
+        in: path
+        description: Dummy account username.
+        schema:
+          type: string
+      responses:
+        200:
+          content:
+            application/json:
+              example:
+              - {username: user52}
+              schema:
+                items: {$ref: '#/components/schemas/DummyAccountInfo'}
+                type: array
+          description: Dummy account.
+  /v1/accounts/{name}/transfer:
+    put:
+      tags: [merchant]
+      operationId: create_dummytransfer
+      description: Transfer fund from account {name} to an arbitrary BitShares account.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {type: boolean}
+          description: True on success, False on failure
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                asset:
+                  type: string
+                  description: ''
+                amount:
+                  type: string
+                  description: ''
+                to:
+                  type: string
+                  description: ''
+                memo:
+                  type: string
+                  description: ''
+                fee_asset:
+                  type: string
+                  description: ''
+  /v1/accounts/{name}/orders:
+    get:
+      tags: [merchant]
+      operationId: list_dummyorders
+      description: Get a list of all open orders for a dummy account.
+      parameters:
+      - required: true
+        name: name
+        in: path
+        description: Dummy account username.
+        schema:
+          type: string
+        example: user52
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                items: {$ref: '#/components/schemas/DummyOrder'}
+                type: array
+          description: Array of account orders.
+    put:
+      tags: [merchant]
+      operationId: create_dummyorder
+      description: Create new limit order on the market.
+      parameters: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                example: {order_id: 1.7.149752523}
+                type: dict
+          description: Unique Order ID for new newly created limit order.
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              properties:
+                input_asset:
+                  type: string
+                  description: ''
+                input_amount:
+                  type: string
+                  description: ''
+                output_asset:
+                  type: string
+                  description: ''
+                output_amount:
+                  type: string
+                  description: ''
+                expiration:
+                  type: integer
+                  description: ''
+                fill_or_kill:
+                  type: boolean
+                  description: ''
+  /v1/accounts/{name}/orders/{order_id}:
+    delete:
+      tags: [merchant]
+      operationId: cancel_dummyorder
+      description: Cancel order identified by {order_id}.
+      parameters:
+      - required: false
+        name: name
+        in: path
+        description: ''
+        schema:
+          type: string
+        example: user52
+      - required: false
+        name: order_id
+        in: path
+        description: ''
+        schema:
+          type: string
+        example: 1.7.180190
+      responses:
+        200:
+          content:
+            application/json:
+              schema: {type: boolean}
+          description: True if an order was removed.
+servers:
+- {url: 'http://127.0.0.1:8016/'}
+- {url: 'https://citadel.li/merchant'}
+tags:
+- {description: Internal CITADEL API. No warranty., name: internal}
+- {description: '', name: merchant}
+components:
+  schemas:
+    DummyAccountInfo:
+      properties:
+        username: {type: string}
+        bitshares_id: {type: string}
+      type: object
+    DummyAccountInput:
+      properties:
+        username: {type: string}
+      type: object
+    DummyOrder:
+      properties:
+        input_asset: {required: true, type: string}
+        input_amount: {required: true, type: string}
+        output_asset: {required: true, type: string}
+        output_amount: {required: true, type: string}
+        expiration: {type: string}
+        order_id: {type: string}
+        seller_id: {type: string}
+        seller_name: {type: string}
+        price_asset: {type: string}
+        price_amount: {type: string}
+      type: object
+    DummyOrderInput:
+      properties:
+        input_asset: {required: true, type: string}
+        input_amount: {required: true, type: string}
+        output_asset: {required: true, type: string}
+        output_amount: {required: true, type: string}
+        expiration: {type: integer}
+        fill_or_kill: {type: boolean}
+      type: object
+    ErrorResponse:
+      properties:
+        success: {required: true, type: boolean}
+        error:
+          properties:
+            code: {type: integer}
+            message: {type: string}
+          type: object
+      type: object
+    MerchantAccountInfo:
+      properties:
+        username: {type: string}
+      type: object
+    MerchantAccountInput:
+      properties:
+        username: {required: true, type: string}
+        password: {required: true, type: string}
+        verification_key: {required: true, type: string}
+      type: object
+    MerchantAccountToken:
+      properties:
+        token: {type: string}
+        expires_in: {type: integer}
+      type: object
+    MerchantServiceInfo:
+      properties:
+        name: {type: string}
+        url: {type: string}
+        api_key: {type: string}
+      type: object
+    MerchantServiceInput:
+      properties:
+        name: {required: true, type: string}
+        url: {required: true, type: string}
+      type: object
+    MerchantServiceNonce:
+      properties:
+        name: {type: string}
+        api_secret: {type: string}
+      type: object
+    TransferInput:
+      properties:
+        asset: {required: true, type: string}
+        amount: {required: true, type: string}
+        to: {required: true, type: string}
+        memo: {type: string}
+        fee_asset: {type: string}
+      type: object
+  securitySchemes:
+    APISecret: {in: header, name: X-Citadel-Auth, type: apiKey}
+security:
+- APISecret: []
+
