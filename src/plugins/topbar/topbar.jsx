@@ -86,7 +86,9 @@ export default class Topbar extends React.Component {
     //   }
     // }
 
-    if (window.location.hash.includes("gateway")) {
+    if (window.location.hash.includes("merchant")) {
+      this.setState({selectedIndex: 3});
+    } else if (window.location.hash.includes("gateway")) {
       this.setState({selectedIndex: 2});
     } else if (window.location.hash.includes("faucet")) {
       this.setState({selectedIndex: 1});
@@ -176,6 +178,7 @@ export default class Topbar extends React.Component {
         </a>
         <a href="#/faucet" className="citadel-menu-item" onClick={ (e) => this.changeAPI(e, "faucet") }>Faucet</a>
         <a href="#/gateway" className="citadel-menu-item" onClick={ (e) => this.changeAPI(e, "gateway") }>Gateway</a>
+        <a href="#/merchant" className="citadel-menu-item" onClick={ (e) => this.changeAPI(e, "merchant") }>Merchant</a>
       </div>
     )
   }
